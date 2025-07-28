@@ -75,11 +75,73 @@ export const authService = {
     }
   },
 
-  // Función para logout
-  logout() {
+  // Función para logout mejorada con llamada al servidor
+  async logout() {
+    try {
+      console.log('🚪 Iniciando logout...');
+      
+      const token = this.getToken();
+      
+      if (token) {
+        // Llamar al endpoint de logout del servidor
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+
+        console.log('📡 Logout Response status:', response.status);
+
+        // Verificar si la respuesta es JSON válido
+        const contentType = response.headers.get('content-type');
+        let data = null;
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+          console.log('📊 Logout Response data:', data);
+        }
+
+        if (!response.ok) {
+          console.warn('⚠️ Error en logout del servidor, pero continuando con logout local');
+        }
+      }
+
+      // Limpiar datos locales (siempre se ejecuta, independientemente del resultado del servidor)
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiry');
+      
+      console.log('✅ Logout completado');
+      
+      return {
+        success: true,
+        message: 'Sesión cerrada exitosamente'
+      };
+
+    } catch (error) {
+      console.error('❌ Error en logout:', error);
+      
+      // Aunque haya error en el servidor, limpiar datos locales
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiry');
+      
+      return {
+        success: true,
+        message: 'Sesión cerrada (con advertencia: error al notificar al servidor)'
+      };
+    }
+  },
+
+  // Función de logout local rápida (sin llamada al servidor)
+  logoutLocal() {
+    console.log('🚪 Logout local...');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('tokenExpiry');
+    console.log('✅ Logout local completado');
   },
 
   // Verificar si el usuario está autenticado
@@ -93,7 +155,7 @@ export const authService = {
 
     // Verificar si el token ha expirado
     if (Date.now() > parseInt(tokenExpiry)) {
-      this.logout();
+      this.logoutLocal(); // Usar logout local para expiración
       return false;
     }
 

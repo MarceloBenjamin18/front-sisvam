@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import "/public/css/titulo.css"; // Ajusta si estás usando Vite, Next.js, etc.
+
+import TextType from "@/components/TextType"; // Ajusta la ruta si está en otro lugar
 import {
   Card,
   CardHeader,
@@ -13,7 +16,6 @@ import {
   Checkbox
 } from "@material-tailwind/react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
-import Folder from './Folder';
 
 export function SignIn() {
   const navigate = useNavigate();
@@ -79,29 +81,35 @@ export function SignIn() {
 
   return (
     <div className="grid lg:grid-cols-2 min-h-screen bg-blue-50">
-      {/* Panel izquierdo - Branding con animación de folder */}
+      {/* Panel izquierdo - Imagen animada con bounce */}
       <div className="hidden lg:flex items-center justify-center bg-gradient-to-b from-blue-400 to-blue-600 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-white"></div>
         <div className="text-center z-10 px-8 max-w-md">
           <div className="mb-8 p-4 flex flex-col items-center">
             <div className="w-full h-48 flex items-center justify-center mb-6">
-              <Folder 
-                size={2} 
-                color="#3B82F6" 
-                className="custom-folder"
+              <img
+                src="/img/logo-gamea-horizontal (1).png"  // Cambia por tu gif animado de valores municipales
+                alt="Valores Municipales"
+                className="h-32 w-auto animate-bounce transition duration-500 hover:scale-110"
               />
             </div>
-            
-            <Typography variant="h3" className="mb-4 font-bold text-white">
-              Gobierno Municipal
-            </Typography>
-            
-            <Typography variant="lead" className="text-blue-100 mb-6">
-              Plataforma Digital Institucional
-            </Typography>
-            
+
+           <TextType
+  as="h3"
+  className="mb-4 font-bold text-white text-3xl lg:text-4xl"
+  text={[
+    "Sistema de Valores Municipales",
+    "Transparencia y compromiso",
+    "Integridad para la ciudad"
+  ]}
+  typingSpeed={60}
+  pauseDuration={2000}
+  showCursor={true}
+  cursorCharacter="|"
+/>
+
             <div className="h-1 w-20 bg-blue-200/50 my-6 mx-auto rounded-full"></div>
-            
+
             <Typography variant="small" className="text-blue-100/90">
               Acceso seguro para funcionarios autorizados
             </Typography>
@@ -109,22 +117,48 @@ export function SignIn() {
         </div>
       </div>
 
-      {/* Panel derecho - Formulario */}
+      {/* Panel derecho - Formulario con sticker animado */}
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-md shadow-lg rounded-xl border border-blue-100 bg-white overflow-hidden">
           <CardHeader
             floated={false}
             shadow={false}
-            className="h-24 flex items-center justify-center bg-blue-500 text-white rounded-t-xl"
+            className="h-36 flex flex-col items-center justify-center bg-blue-500 text-white rounded-t-xl"
           >
-            <div className="text-center">
-              <Typography variant="h4" className="font-bold">
-                Iniciar Sesión
-              </Typography>
-              <Typography variant="small" className="text-blue-100 mt-1">
-                Ingrese sus credenciales
-              </Typography>
-            </div>
+           <CardHeader
+  floated={false}
+  shadow={false}
+  className="h-36 flex flex-col items-center justify-center bg-blue-500 text-white rounded-t-xl"
+>
+  <div className="flex items-center justify-center w-full max-w-md px-4">
+    {/* Imagen izquierda */}
+    <img
+      src="/iconos/dinero.png"
+      alt="Icono Izquierdo"
+      className="w-12 h-12 fade-bounce mr-4"
+    />
+
+    {/* Texto central */}
+    <div className="flex flex-col items-center">
+      <Typography variant="h4" className="font-bold">
+        SISVAM 2.0
+      </Typography>
+
+      <Typography variant="small" className="text-blue-100 mt-1">
+        Ingrese sus credenciales
+      </Typography>
+    </div>
+
+    {/* Imagen derecha */}
+    <img
+      src="/iconos/dinero.png"
+      alt="Icono Derecho"
+      className="w-12 h-12 fade-bounce ml-4"
+    />
+  </div>
+</CardHeader>
+
+
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
@@ -149,7 +183,6 @@ export function SignIn() {
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  placeholder="Ej: 12345678"
                   maxLength="20"
                   className="!border-blue-200 focus:!border-blue-500 rounded-lg"
                   containerProps={{ className: "min-w-[100px]" }}
@@ -239,14 +272,7 @@ export function SignIn() {
               <div className="mt-6 text-center border-t border-blue-100 pt-4">
                 <Typography variant="small" className="text-blue-600">
                   ¿Necesita ayuda? Contacte a{' '}
-                  <Typography
-                    as="a"
-                    href="mailto:soporte@municipio.com"
-                    variant="small"
-                    className="font-bold text-blue-700 hover:underline"
-                  >
-                    soporte@municipio.com
-                  </Typography>
+                 
                 </Typography>
               </div>
             </CardFooter>

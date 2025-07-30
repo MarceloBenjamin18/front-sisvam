@@ -1,220 +1,512 @@
+import React, { useState, useEffect } from "react";
+import { useAuth } from '@/context/AuthContext';
 import {
   Card,
   CardBody,
-  CardHeader,
-  CardFooter,
   Avatar,
   Typography,
+  Chip,
+  Button,
+  Alert,
   Tabs,
   TabsHeader,
+  TabsBody,
   Tab,
-  Switch,
+  TabPanel,
   Tooltip,
-  Button,
+  Spinner
 } from "@material-tailwind/react";
-import {
-  HomeIcon,
-  ChatBubbleLeftEllipsisIcon,
-  Cog6ToothIcon,
-  PencilIcon,
-} from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
-import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
-import { platformSettingsData, conversationsData, projectsData } from "@/data";
+import { 
+  ClockIcon, 
+  KeyIcon, 
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  UserIcon,
+  EnvelopeIcon,
+  IdentificationIcon,
+  BuildingOfficeIcon,
+  ShieldCheckIcon,
+  ClipboardDocumentListIcon,
+  ArrowRightOnRectangleIcon,
+  CalendarIcon,
+  PhoneIcon
+} from "@heroicons/react/24/outline";
+
+const UserDataField = ({ icon, label, value, color = 'blue', className = '' }) => (
+  <div className={`bg-${color}-50 p-4 rounded-lg border border-${color}-100 ${className}`}>
+    <div className="flex items-center gap-2 mb-2">
+      {icon}
+      <Typography variant="small" className={`font-bold text-${color}-800 uppercase`}>
+        {label}
+      </Typography>
+    </div>
+    <Typography variant="paragraph" className="text-blue-gray-800 break-words">
+      {value || 'No disponible'}
+    </Typography>
+  </div>
+);
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'No disponible';
+  try {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString('es-ES', options);
+  } catch {
+    return dateString;
+  }
+};
+
+const protectData = (data, visibleChars = 3) => {
+  if (!data) return 'No disponible';
+  if (data.length <= visibleChars * 2) return data;
+  return `${data.substring(0, visibleChars)}${'*'.repeat(data.length - visibleChars * 2)}${data.slice(-visibleChars)}`;
+};
 
 export function Profile() {
-  return (
-    <>
-      <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
-        <div className="absolute inset-0 h-full w-full bg-gray-900/75" />
+  const { 
+    user, 
+    loginResponse, 
+    loading, 
+    logout, 
+    token,
+    requiresPasswordChange,
+    passwordExpired,
+    debugAuth
+  } = useAuth();
+  
+  const [showToken, setShowToken] = useState(false);
+  const [activeTab, setActiveTab] = useState("perfil");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        if (debugAuth && typeof debugAuth === 'function') {
+          debugAuth();
+        }
+      } catch (error) {
+        console.error('Debug error:', error);
+      }
+    }
+  }, [debugAuth]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-gray-50">
+        <div className="text-center">
+          <Spinner className="h-12 w-12 mx-auto" />
+          <Typography variant="h6" className="mt-4 text-blue-600">
+            Cargando información del usuario...
+          </Typography>
+        </div>
       </div>
-      <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
-        <CardBody className="p-4">
-          <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-6">
-              <Avatar
-                src="/img/bruce-mars.jpeg"
-                alt="bruce-mars"
-                size="xl"
-                variant="rounded"
-                className="rounded-lg shadow-lg shadow-blue-gray-500/40"
-              />
-              <div>
-                <Typography variant="h5" color="blue-gray" className="mb-1">
-                  Richard Davis
-                </Typography>
-                <Typography
-                  variant="small"
-                  className="font-normal text-blue-gray-600"
-                >
-                  CEO / Co-Founder
-                </Typography>
-              </div>
-            </div>
-            <div className="w-96">
-              <Tabs value="app">
-                <TabsHeader>
-                  <Tab value="app">
-                    <HomeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    App
-                  </Tab>
-                  <Tab value="message">
-                    <ChatBubbleLeftEllipsisIcon className="-mt-0.5 mr-2 inline-block h-5 w-5" />
-                    Message
-                  </Tab>
-                  <Tab value="settings">
-                    <Cog6ToothIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Settings
-                  </Tab>
-                </TabsHeader>
-              </Tabs>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-blue-gray-50">
+        <ExclamationTriangleIcon className="h-16 w-16 mb-4 text-red-400" />
+        <Typography variant="h4" className="mb-2 text-blue-gray-700">
+          No hay información de usuario
+        </Typography>
+        <Typography variant="small" className="text-blue-gray-500 mb-4">
+          Por favor, inicie sesión nuevamente
+        </Typography>
+        <Button onClick={() => window.location.href = '/auth/sign-in'} color="blue">
+          Ir al Login
+        </Button>
+      </div>
+    );
+  }
+
+  const formatToken = (token) => {
+    if (!token) return 'No disponible';
+    return showToken ? token : `${'*'.repeat(20)}${token.slice(-12)}`;
+  };
+
+  const getTokenExpiration = () => {
+    if (!token) return 'No disponible';
+    try {
+      const tokenParts = token.split('.');
+      if (tokenParts.length >= 2) {
+        const payload = JSON.parse(atob(tokenParts[1]));
+        if (payload.exp) {
+          return formatDate(new Date(payload.exp * 1000));
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing token:', error);
+    }
+    return 'No se pudo determinar';
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="relative mb-8 h-64 w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-xl">
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white">
+              <Typography variant="h2" className="font-bold mb-2">
+                Perfil de Usuario
+              </Typography>
+              <Typography variant="lead" className="opacity-90">
+                Sistema SISVAM 2.0 - Información de la Cuenta
+              </Typography>
             </div>
           </div>
-          <div className="gird-cols-1 mb-12 grid gap-12 px-4 lg:grid-cols-2 xl:grid-cols-3">
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-3">
-                Platform Settings
-              </Typography>
-              <div className="flex flex-col gap-12">
-                {platformSettingsData.map(({ title, options }) => (
-                  <div key={title}>
-                    <Typography className="mb-4 block text-xs font-semibold uppercase text-blue-gray-500">
-                      {title}
+        </div>
+
+        {(requiresPasswordChange || passwordExpired) && (
+          <Alert 
+            color={passwordExpired ? "red" : "amber"} 
+            className="mb-6 border-l-4"
+            icon={<ExclamationTriangleIcon className="h-6 w-6" />}
+          >
+            <Typography variant="h6" className="font-bold">
+              {passwordExpired ? "Contraseña Vencida" : "Cambio de Contraseña Requerido"}
+            </Typography>
+            <Typography variant="small" className="mt-1">
+              {passwordExpired 
+                ? "Su contraseña ha vencido. Debe cambiarla inmediatamente para continuar usando el sistema."
+                : "Se requiere que cambie su contraseña para mayor seguridad."
+              }
+            </Typography>
+          </Alert>
+        )}
+
+        <Card className="shadow-xl border border-blue-gray-100">
+          <CardBody className="p-0">
+            <div className="p-8 border-b border-blue-gray-100">
+              <div className="flex items-center gap-6 flex-wrap">
+                <Avatar
+                  src="/img/bruce-mars.jpeg"
+                  alt={`${user.nombres} ${user.apellidos}`}
+                  size="xl"
+                  variant="rounded"
+                  className="rounded-xl shadow-lg border-4 border-white"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3 flex-wrap">
+                    <Typography variant="h3" color="blue-gray" className="font-bold">
+                      {user.nombres} {user.apellidos}
                     </Typography>
-                    <div className="flex flex-col gap-6">
-                      {options.map(({ checked, label }) => (
-                        <Switch
-                          key={label}
-                          id={label}
-                          label={label}
-                          defaultChecked={checked}
-                          labelProps={{
-                            className: "text-sm font-normal text-blue-gray-500",
-                          }}
-                        />
-                      ))}
+                    {loginResponse?.success && (
+                      <Chip
+                        icon={<CheckCircleIcon className="h-4 w-4" />}
+                        value="Sesión Activa"
+                        color="green"
+                        size="sm"
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <UserIcon className="h-5 w-5 text-blue-500" />
+                    <Typography variant="h5" className="font-medium text-blue-600">
+                      {user.rol}
+                    </Typography>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <BuildingOfficeIcon className="h-5 w-5 text-blue-gray-500" />
+                    <Typography variant="small" className="text-blue-gray-600">
+                      {user.sucursal || 'No especificada'}
+                    </Typography>
+                  </div>
+                </div>
+                <Tooltip content="Cerrar sesión en todos los dispositivos">
+                  <Button
+                    onClick={logout}
+                    color="red"
+                    variant="outlined"
+                    size="sm"
+                    className="flex items-center gap-2 ml-auto"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                    Cerrar Sesión
+                  </Button>
+                </Tooltip>
+              </div>
+            </div>
+
+            <Tabs value={activeTab} className="w-full">
+              <TabsHeader className="m-4 bg-blue-gray-50">
+                <Tab value="perfil" onClick={() => setActiveTab("perfil")} className="flex items-center gap-2">
+                  <UserIcon className="h-4 w-4" />
+                  Información Personal
+                </Tab>
+                <Tab value="sesion" onClick={() => setActiveTab("sesion")} className="flex items-center gap-2">
+                  <ShieldCheckIcon className="h-4 w-4" />
+                  Sesión
+                </Tab>
+                <Tab value="json" onClick={() => setActiveTab("json")} className="flex items-center gap-2">
+                  <ClipboardDocumentListIcon className="h-4 w-4" />
+                  JSON
+                </Tab>
+              </TabsHeader>
+
+              <TabsBody>
+                <TabPanel value="perfil" className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <UserDataField
+                      icon={<IdentificationIcon className="h-5 w-5 text-blue-600" />}
+                      label="ID de Usuario"
+                      value={`#${user.id}`}
+                      color="blue"
+                    />
+
+                    <UserDataField
+                      icon={<IdentificationIcon className="h-5 w-5 text-green-600" />}
+                      label="Número de Carnet"
+                      value={user.ci}
+                      color="green"
+                    />
+
+                    <UserDataField
+                      icon={<EnvelopeIcon className="h-5 w-5 text-purple-600" />}
+                      label="Correo Electrónico"
+                      value={protectData(user.email)}
+                      color="purple"
+                      className="md:col-span-2"
+                    />
+
+                    <UserDataField
+                      icon={<UserIcon className="h-5 w-5 text-indigo-600" />}
+                      label="Rol del Usuario"
+                      value={user.rol}
+                      color="indigo"
+                    />
+
+                    <UserDataField
+                      icon={<BuildingOfficeIcon className="h-5 w-5 text-teal-600" />}
+                      label="Sucursal"
+                      value={user.sucursal}
+                      color="teal"
+                    />
+
+                    <UserDataField
+                      icon={<CalendarIcon className="h-5 w-5 text-amber-600" />}
+                      label="Último Acceso"
+                      value={formatDate(user.ultimo_acceso)}
+                      color="amber"
+                    />
+
+                    <UserDataField
+                      icon={<PhoneIcon className="h-5 w-5 text-cyan-600" />}
+                      label="Teléfono"
+                      value={user.telefono ? protectData(user.telefono, 2) : 'No proporcionado'}
+                      color="cyan"
+                    />
+
+                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                      <div className="flex items-center gap-2 mb-3">
+                        <KeyIcon className="h-5 w-5 text-amber-600" />
+                        <Typography variant="small" className="font-bold text-amber-800 uppercase">
+                          Requiere Cambio de Contraseña
+                        </Typography>
+                      </div>
+                      <Chip
+                        value={user.requiere_cambio_password ? "Sí" : "No"}
+                        color={user.requiere_cambio_password ? "amber" : "green"}
+                        size="lg"
+                        className="w-fit"
+                      />
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ClockIcon className="h-5 w-5 text-red-600" />
+                        <Typography variant="small" className="font-bold text-red-800 uppercase">
+                          Contraseña Vencida
+                        </Typography>
+                      </div>
+                      <Chip
+                        value={user.password_vencida ? "Sí" : "No"}
+                        color={user.password_vencida ? "red" : "green"}
+                        size="lg"
+                        className="w-fit"
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            <ProfileInfoCard
-              title="Profile Information"
-              description="Hi, I'm Alec Thompson, Decisions: If you can't decide, the answer is no. If two equally difficult paths, choose the one more painful in the short term (pain avoidance is creating an illusion of equality)."
-              details={{
-                "first name": "Alec M. Thompson",
-                mobile: "(44) 123 1234 123",
-                email: "alecthompson@mail.com",
-                location: "USA",
-                social: (
-                  <div className="flex items-center gap-4">
-                    <i className="fa-brands fa-facebook text-blue-700" />
-                    <i className="fa-brands fa-twitter text-blue-400" />
-                    <i className="fa-brands fa-instagram text-purple-500" />
-                  </div>
-                ),
-              }}
-              action={
-                <Tooltip content="Edit Profile">
-                  <PencilIcon className="h-4 w-4 cursor-pointer text-blue-gray-500" />
-                </Tooltip>
-              }
-            />
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-3">
-                Platform Settings
-              </Typography>
-              <ul className="flex flex-col gap-6">
-                {conversationsData.map((props) => (
-                  <MessageCard
-                    key={props.name}
-                    {...props}
-                    action={
-                      <Button variant="text" size="sm">
-                        reply
-                      </Button>
-                    }
-                  />
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="px-4 pb-4">
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Projects
-            </Typography>
-            <Typography
-              variant="small"
-              className="font-normal text-blue-gray-500"
-            >
-              Architects design houses
-            </Typography>
-            <div className="mt-6 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4">
-              {projectsData.map(
-                ({ img, title, description, tag, route, members }) => (
-                  <Card key={title} color="transparent" shadow={false}>
-                    <CardHeader
-                      floated={false}
-                      color="gray"
-                      className="mx-0 mt-0 mb-4 h-64 xl:h-40"
-                    >
-                      <img
-                        src={img}
-                        alt={title}
-                        className="h-full w-full object-cover"
-                      />
-                    </CardHeader>
-                    <CardBody className="py-0 px-1">
-                      <Typography
-                        variant="small"
-                        className="font-normal text-blue-gray-500"
-                      >
-                        {tag}
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        color="blue-gray"
-                        className="mt-1 mb-2"
-                      >
-                        {title}
-                      </Typography>
-                      <Typography
-                        variant="small"
-                        className="font-normal text-blue-gray-500"
-                      >
-                        {description}
-                      </Typography>
-                    </CardBody>
-                    <CardFooter className="mt-6 flex items-center justify-between py-0 px-1">
-                      <Link to={route}>
-                        <Button variant="outlined" size="sm">
-                          view project
-                        </Button>
-                      </Link>
-                      <div>
-                        {members.map(({ img, name }, key) => (
-                          <Tooltip key={name} content={name}>
-                            <Avatar
-                              src={img}
-                              alt={name}
-                              size="xs"
-                              variant="circular"
-                              className={`cursor-pointer border-2 border-white ${
-                                key === 0 ? "" : "-ml-2.5"
-                              }`}
+                </TabPanel>
+
+                <TabPanel value="sesion" className="p-6">
+                  {loginResponse ? (
+                    <div className="space-y-6">
+                      <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                        <Typography variant="h5" className="font-bold text-green-800 mb-4">
+                          Estado de la Sesión
+                        </Typography>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Typography variant="small" className="font-semibold text-green-700 uppercase mb-1">
+                              Estado del Login
+                            </Typography>
+                            <Chip
+                              value={loginResponse.message}
+                              color="green"
+                              size="sm"
+                              className="w-fit"
                             />
-                          </Tooltip>
-                        ))}
+                          </div>
+                          <div>
+                            <Typography variant="small" className="font-semibold text-green-700 uppercase mb-1">
+                              Autenticado
+                            </Typography>
+                            <Typography variant="h6">
+                              {loginResponse.success ? "✅ Sí" : "❌ No"}
+                            </Typography>
+                          </div>
+                        </div>
                       </div>
-                    </CardFooter>
-                  </Card>
-                )
-              )}
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </>
+
+                      <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                        <Typography variant="h5" className="font-bold text-blue-800 mb-4">
+                          Información del Token
+                        </Typography>
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Typography variant="small" className="font-semibold text-blue-700 uppercase">
+                                Token de Acceso
+                              </Typography>
+                              <Tooltip content={showToken ? "Ocultar token" : "Mostrar token"}>
+                                <Button
+                                  size="sm"
+                                  variant="text"
+                                  className="p-1"
+                                  onClick={() => setShowToken(!showToken)}
+                                >
+                                  {showToken ? (
+                                    <EyeSlashIcon className="h-4 w-4" />
+                                  ) : (
+                                    <EyeIcon className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </Tooltip>
+                            </div>
+                            <Typography variant="small" className="font-mono bg-white p-2 rounded border break-all">
+                              {formatToken(token)}
+                            </Typography>
+                          </div>
+                          
+                          <div>
+                            <Typography variant="small" className="font-semibold text-blue-700 uppercase mb-1">
+                              Tiempo de Expiración
+                            </Typography>
+                            <Typography variant="small" className="text-blue-gray-700">
+                              {getTokenExpiration()}
+                            </Typography>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <Typography variant="h5" className="font-bold text-gray-800 mb-4">
+                          Datos Técnicos
+                        </Typography>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <Typography variant="small" className="font-semibold text-gray-700 uppercase mb-1">
+                              Hora de Login
+                            </Typography>
+                            <Typography variant="small" className="text-blue-gray-700">
+                              {formatDate(loginResponse.timestamp)}
+                            </Typography>
+                          </div>
+                          <div>
+                            <Typography variant="small" className="font-semibold text-gray-700 uppercase mb-1">
+                              Duración de Sesión
+                            </Typography>
+                            <Typography variant="small" className="text-blue-gray-700">
+                              8 horas
+                            </Typography>
+                          </div>
+                          <div>
+                            <Typography variant="small" className="font-semibold text-gray-700 uppercase mb-1">
+                              Dispositivo
+                            </Typography>
+                            <Typography variant="small" className="text-blue-gray-700">
+                              {navigator.userAgent.split(') ')[0].split(' (')[1] || 'Desconocido'}
+                            </Typography>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <Typography variant="h6" className="text-gray-600">
+                        No hay información de sesión disponible
+                      </Typography>
+                    </div>
+                  )}
+                </TabPanel>
+
+                <TabPanel value="json" className="p-6">
+                  {loginResponse ? (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <Typography variant="h5" className="font-bold text-blue-gray-800">
+                          Respuesta JSON Completa
+                        </Typography>
+                        <Tooltip content={copied ? "¡Copiado!" : "Copiar al portapapeles"}>
+                          <Button
+                            size="sm"
+                            variant="outlined"
+                            onClick={() => copyToClipboard(JSON.stringify(loginResponse, null, 2))}
+                          >
+                            Copiar JSON
+                          </Button>
+                        </Tooltip>
+                      </div>
+                      
+                      <div className="bg-gray-900 rounded-lg p-6 overflow-auto max-h-96 border">
+                        <pre className="text-sm text-green-400 whitespace-pre-wrap font-mono">
+                          {JSON.stringify(loginResponse, null, 2)}
+                        </pre>
+                      </div>
+
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <Typography variant="h6" className="font-bold text-blue-800 mb-2">
+                          Estructura del JSON
+                        </Typography>
+                        <div className="text-sm text-blue-gray-700 space-y-1">
+                          <p><strong>Tamaño:</strong> {JSON.stringify(loginResponse).length} caracteres</p>
+                          <p><strong>Propiedades principales:</strong> {Object.keys(loginResponse).join(', ')}</p>
+                          <p><strong>Propiedades del usuario:</strong> {Object.keys(loginResponse.user || {}).join(', ')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <Typography variant="h6" className="text-gray-600">
+                        No hay respuesta JSON disponible
+                      </Typography>
+                    </div>
+                  )}
+                </TabPanel>
+              </TabsBody>
+            </Tabs>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
   );
 }
 

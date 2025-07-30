@@ -25,12 +25,14 @@ export const routes = [
         path: "/sign-in",
         element: <SignIn />,
         isDefault: true, // Marcamos esta como la ruta por defecto
+        hideFromMenu: true, // Ocultar del menú
       },
       {
         icon: <RectangleStackIcon {...icon} />,
         name: "sign up",
         path: "/sign-up",
         element: <SignUp />,
+        hideFromMenu: true, // Ocultar del menú
       },
     ],
   },
@@ -76,6 +78,14 @@ export const getDefaultRoute = () => {
   }
   // Fallback al sign-in si no se encuentra una ruta por defecto
   return "/auth/sign-in";
+};
+
+// Función helper para obtener solo las rutas visibles en el menú
+export const getVisibleRoutes = () => {
+  return routes.map(section => ({
+    ...section,
+    pages: section.pages.filter(page => !page.hideFromMenu)
+  })).filter(section => section.pages.length > 0);
 };
 
 export default routes;

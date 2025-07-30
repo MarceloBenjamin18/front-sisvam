@@ -1,3 +1,4 @@
+// Profile.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -7,7 +8,6 @@ import {
   Typography,
   Chip,
   Button,
-  Alert,
   Tabs,
   TabsHeader,
   TabsBody,
@@ -16,9 +16,10 @@ import {
   Tooltip,
   Spinner
 } from "@material-tailwind/react";
-import { 
-  ClockIcon, 
-  KeyIcon, 
+
+import {
+  ClockIcon,
+  KeyIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   UserIcon,
@@ -28,29 +29,16 @@ import {
   ShieldCheckIcon,
   ArrowRightOnRectangleIcon,
   CalendarIcon,
-  PhoneIcon
+  PhoneIcon,
+  CpuChipIcon,
 } from "@heroicons/react/24/outline";
-
-const UserDataField = ({ icon, label, value, color = 'blue', className = '' }) => (
-  <div className={`bg-${color}-50 p-4 rounded-lg border border-${color}-100 ${className}`}>
-    <div className="flex items-center gap-2 mb-2">
-      {icon}
-      <Typography variant="small" className={`font-bold text-${color}-800 uppercase`}>
-        {label}
-      </Typography>
-    </div>
-    <Typography variant="paragraph" className="text-blue-gray-800 break-words">
-      {value || 'No disponible'}
-    </Typography>
-  </div>
-);
 
 const formatDate = (dateString) => {
   if (!dateString) return 'No disponible';
   try {
-    const options = { 
-      year: 'numeric', 
-      month: 'long', 
+    const options = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -67,17 +55,29 @@ const protectData = (data, visibleChars = 3) => {
   return `${data.substring(0, visibleChars)}${'*'.repeat(data.length - visibleChars * 2)}${data.slice(-visibleChars)}`;
 };
 
+const InfoCard = ({ icon, label, value, bg }) => (
+  <div className="flex items-center gap-3 bg-white rounded-xl shadow p-3 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33%-0.75rem)]">
+    <div className={`rounded-full p-2 ${bg}`}>
+      {icon}
+    </div>
+    <div className="text-sm">
+      <div className="font-bold text-gray-700">{label}</div>
+      <div className="text-gray-500 text-xs">{value}</div>
+    </div>
+  </div>
+);
+
 export function Profile() {
-  const { 
-    user, 
-    loginResponse, 
-    loading, 
+  const {
+    user,
+    loginResponse,
+    loading,
     logout,
     requiresPasswordChange,
     passwordExpired,
     debugAuth
   } = useAuth();
-  
+
   const [activeTab, setActiveTab] = useState("perfil");
 
   useEffect(() => {
@@ -95,12 +95,10 @@ export function Profile() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-gray-50">
-        <div className="text-center">
-          <Spinner className="h-12 w-12 mx-auto" />
-          <Typography variant="h6" className="mt-4 text-blue-600">
-            Cargando información del usuario...
-          </Typography>
-        </div>
+        <Spinner className="h-12 w-12" />
+        <Typography variant="h6" className="ml-4 text-blue-600">
+          Cargando información del usuario...
+        </Typography>
       </div>
     );
   }
@@ -127,8 +125,8 @@ export function Profile() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="relative mb-8 h-40 w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-xl">
           <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-white">
+          <div className="absolute inset-0 flex items-center justify-center text-white text-center">
+            <div>
               <Typography variant="h2" className="font-bold mb-2">
                 Perfil de Usuario
               </Typography>
@@ -138,7 +136,6 @@ export function Profile() {
             </div>
           </div>
         </div>
-
 
         <Card className="shadow-xl border border-blue-gray-100">
           <CardBody className="p-0">
@@ -193,7 +190,7 @@ export function Profile() {
               </div>
             </div>
 
-            <Tabs value={activeTab} className="w-full">
+            <Tabs value={activeTab}>
               <TabsHeader className="m-4 bg-blue-gray-50">
                 <Tab value="perfil" onClick={() => setActiveTab("perfil")} className="flex items-center gap-2">
                   <UserIcon className="h-4 w-4" />
@@ -206,150 +203,68 @@ export function Profile() {
               </TabsHeader>
 
               <TabsBody>
-                 <TabPanel value="perfil" className="p-4">
-  <div className="flex flex-wrap gap-3">
-    {[
-      {
-        icon: <IdentificationIcon className="h-4 w-4 text-white" />,
-        label: "ID",
-        value: `#${user.id}`,
-        bg: "bg-blue-600",
-      },
-      {
-        icon: <IdentificationIcon className="h-4 w-4 text-white" />,
-        label: "Carnet",
-        value: user.ci,
-        bg: "bg-green-600",
-      },
-      {
-        icon: <EnvelopeIcon className="h-4 w-4 text-white" />,
-        label: "Correo",
-        value: protectData(user.email),
-        bg: "bg-purple-600",
-      },
-      {
-        icon: <UserIcon className="h-4 w-4 text-white" />,
-        label: "Rol",
-        value: user.rol,
-        bg: "bg-indigo-600",
-      },
-      {
-        icon: <BuildingOfficeIcon className="h-4 w-4 text-white" />,
-        label: "Sucursal",
-        value: user.sucursal,
-        bg: "bg-teal-600",
-      },
-      {
-        icon: <CalendarIcon className="h-4 w-4 text-white" />,
-        label: "Último Acceso",
-        value: formatDate(user.ultimo_acceso),
-        bg: "bg-amber-600",
-      },
-      {
-        icon: <PhoneIcon className="h-4 w-4 text-white" />,
-        label: "Teléfono",
-        value: user.telefono ? protectData(user.telefono, 2) : "No proporcionado",
-        bg: "bg-cyan-600",
-      },
-      {
-        icon: <KeyIcon className="h-4 w-4 text-white" />,
-        label: "Cambio Contraseña",
-        value: user.requiere_cambio_password ? "Sí" : "No",
-        bg: "bg-amber-700",
-      },
-      {
-        icon: <ClockIcon className="h-4 w-4 text-white" />,
-        label: "Contraseña Vencida",
-        value: user.password_vencida ? "Sí" : "No",
-        bg: "bg-red-600",
-      },
-    ].map(({ icon, label, value, bg }, index) => (
-      <div
-        key={index}
-        className="flex items-center gap-3 bg-white rounded-xl shadow-md p-3 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33%-0.75rem)]"
-      >
-        <div className={`rounded-full p-2 ${bg}`}>
-          {icon}
-        </div>
-        <div className="text-sm">
-          <div className="font-bold text-gray-700">{label}</div>
-          <div className="text-gray-500 text-xs">{value}</div>
-        </div>
-      </div>
-    ))}
-  </div>
-</TabPanel>
+                <TabPanel value="perfil" className="p-4">
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { icon: <IdentificationIcon className="h-4 w-4 text-white" />, label: "ID", value: `#${user.id}`, bg: "bg-blue-600" },
+                      { icon: <IdentificationIcon className="h-4 w-4 text-white" />, label: "Carnet", value: user.ci, bg: "bg-green-600" },
+                      { icon: <EnvelopeIcon className="h-4 w-4 text-white" />, label: "Correo", value: protectData(user.email), bg: "bg-purple-600" },
+                      { icon: <UserIcon className="h-4 w-4 text-white" />, label: "Rol", value: user.rol, bg: "bg-indigo-600" },
+                      { icon: <BuildingOfficeIcon className="h-4 w-4 text-white" />, label: "Sucursal", value: user.sucursal, bg: "bg-teal-600" },
+                      { icon: <CalendarIcon className="h-4 w-4 text-white" />, label: "Último Acceso", value: formatDate(user.ultimo_acceso), bg: "bg-amber-600" },
+                      { icon: <PhoneIcon className="h-4 w-4 text-white" />, label: "Teléfono", value: user.telefono ? protectData(user.telefono, 2) : "No proporcionado", bg: "bg-cyan-600" },
+                      { icon: <KeyIcon className="h-4 w-4 text-white" />, label: "Cambio Contraseña", value: user.requiere_cambio_password ? "Sí" : "No", bg: "bg-yellow-700" },
+                      { icon: <ClockIcon className="h-4 w-4 text-white" />, label: "Contraseña Vencida", value: user.password_vencida ? "Sí" : "No", bg: "bg-red-600" },
+                    ].map((item, index) => (
+                      <InfoCard key={index} {...item} />
+                    ))}
+                  </div>
+                </TabPanel>
 
-                <TabPanel value="sesion" className="p-6">
-                  {loginResponse ? (
-                    <div className="space-y-6">
-                      <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                        <Typography variant="h5" className="font-bold text-green-800 mb-4">
-                          Estado de la Sesión
+                <TabPanel value="sesion" className="p-4">
+                  <div className="flex flex-wrap gap-3">
+                    {loginResponse ? (
+                      <>
+                        <InfoCard
+                          icon={<CheckCircleIcon className="h-4 w-4 text-white" />}
+                          label="Estado de Login"
+                          value={loginResponse.message}
+                          bg="bg-green-600"
+                        />
+                        <InfoCard
+                          icon={<ShieldCheckIcon className="h-4 w-4 text-white" />}
+                          label="Autenticado"
+                          value={loginResponse.success ? "✅ Sí" : "❌ No"}
+                          bg="bg-green-800"
+                        />
+                        <InfoCard
+                          icon={<ClockIcon className="h-4 w-4 text-white" />}
+                          label="Hora Login"
+                          value={formatDate(loginResponse.timestamp)}
+                          bg="bg-indigo-500"
+                        />
+                        <InfoCard
+                          icon={<CalendarIcon className="h-4 w-4 text-white" />}
+                          label="Duración Sesión"
+                          value="8 horas"
+                          bg="bg-yellow-600"
+                        />
+                        <InfoCard
+                          icon={<CpuChipIcon className="h-4 w-4 text-white" />}
+                          label="Dispositivo"
+                          value={navigator.userAgent.split(') ')[0].split(' (')[1] || 'Desconocido'}
+                          bg="bg-gray-700"
+                        />
+                      </>
+                    ) : (
+                      <div className="text-center w-full py-12">
+                        <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                        <Typography variant="h6" className="text-gray-600">
+                          No hay información de sesión disponible
                         </Typography>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Typography variant="small" className="font-semibold text-green-700 uppercase mb-1">
-                              Estado del Login
-                            </Typography>
-                            <Chip
-                              value={loginResponse.message}
-                              color="green"
-                              size="sm"
-                              className="w-fit"
-                            />
-                          </div>
-                          <div>
-                            <Typography variant="small" className="font-semibold text-green-700 uppercase mb-1">
-                              Autenticado
-                            </Typography>
-                            <Typography variant="h6">
-                              {loginResponse.success ? "✅ Sí" : "❌ No"}
-                            </Typography>
-                          </div>
-                        </div>
                       </div>
-
-                      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                        <Typography variant="h5" className="font-bold text-gray-800 mb-4">
-                          Datos Técnicos
-                        </Typography>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase mb-1">
-                              Hora de Login
-                            </Typography>
-                            <Typography variant="small" className="text-blue-gray-700">
-                              {formatDate(loginResponse.timestamp)}
-                            </Typography>
-                          </div>
-                          <div>
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase mb-1">
-                              Duración de Sesión
-                            </Typography>
-                            <Typography variant="small" className="text-blue-gray-700">
-                              8 horas
-                            </Typography>
-                          </div>
-                          <div>
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase mb-1">
-                              Dispositivo
-                            </Typography>
-                            <Typography variant="small" className="text-blue-gray-700">
-                              {navigator.userAgent.split(') ')[0].split(' (')[1] || 'Desconocido'}
-                            </Typography>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                      <Typography variant="h6" className="text-gray-600">
-                        No hay información de sesión disponible
-                      </Typography>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </TabPanel>
               </TabsBody>
             </Tabs>

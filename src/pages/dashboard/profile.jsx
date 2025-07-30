@@ -206,89 +206,79 @@ export function Profile() {
               </TabsHeader>
 
               <TabsBody>
-                <TabPanel value="perfil" className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <UserDataField
-                      icon={<IdentificationIcon className="h-5 w-5 text-blue-600" />}
-                      label="ID de Usuario"
-                      value={`#${user.id}`}
-                      color="blue"
-                    />
-
-                    <UserDataField
-                      icon={<IdentificationIcon className="h-5 w-5 text-green-600" />}
-                      label="Número de Carnet"
-                      value={user.ci}
-                      color="green"
-                    />
-
-                    <UserDataField
-                      icon={<EnvelopeIcon className="h-5 w-5 text-purple-600" />}
-                      label="Correo Electrónico"
-                      value={protectData(user.email)}
-                      color="purple"
-                      className="md:col-span-2"
-                    />
-
-                    <UserDataField
-                      icon={<UserIcon className="h-5 w-5 text-indigo-600" />}
-                      label="Rol del Usuario"
-                      value={user.rol}
-                      color="indigo"
-                    />
-
-                    <UserDataField
-                      icon={<BuildingOfficeIcon className="h-5 w-5 text-teal-600" />}
-                      label="Sucursal"
-                      value={user.sucursal}
-                      color="teal"
-                    />
-
-                    <UserDataField
-                      icon={<CalendarIcon className="h-5 w-5 text-amber-600" />}
-                      label="Último Acceso"
-                      value={formatDate(user.ultimo_acceso)}
-                      color="amber"
-                    />
-
-                    <UserDataField
-                      icon={<PhoneIcon className="h-5 w-5 text-cyan-600" />}
-                      label="Teléfono"
-                      value={user.telefono ? protectData(user.telefono, 2) : 'No proporcionado'}
-                      color="cyan"
-                    />
-
-                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
-                      <div className="flex items-center gap-2 mb-3">
-                        <KeyIcon className="h-5 w-5 text-amber-600" />
-                        <Typography variant="small" className="font-bold text-amber-800 uppercase">
-                          Requiere Cambio de Contraseña
-                        </Typography>
-                      </div>
-                      <Chip
-                        value={user.requiere_cambio_password ? "Sí" : "No"}
-                        color={user.requiere_cambio_password ? "amber" : "green"}
-                        size="lg"
-                        className="w-fit"
-                      />
-                    </div>
-
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-                      <div className="flex items-center gap-2 mb-3">
-                        <ClockIcon className="h-5 w-5 text-red-600" />
-                        <Typography variant="small" className="font-bold text-red-800 uppercase">
-                          Contraseña Vencida
-                        </Typography>
-                      </div>
-                      <Chip
-                        value={user.password_vencida ? "Sí" : "No"}
-                        color={user.password_vencida ? "red" : "green"}
-                        size="lg"
-                        className="w-fit"
-                      />
-                    </div>
-                  </div>
-                </TabPanel>
+                 <TabPanel value="perfil" className="p-4">
+  <div className="flex flex-wrap gap-3">
+    {[
+      {
+        icon: <IdentificationIcon className="h-4 w-4 text-white" />,
+        label: "ID",
+        value: `#${user.id}`,
+        bg: "bg-blue-600",
+      },
+      {
+        icon: <IdentificationIcon className="h-4 w-4 text-white" />,
+        label: "Carnet",
+        value: user.ci,
+        bg: "bg-green-600",
+      },
+      {
+        icon: <EnvelopeIcon className="h-4 w-4 text-white" />,
+        label: "Correo",
+        value: protectData(user.email),
+        bg: "bg-purple-600",
+      },
+      {
+        icon: <UserIcon className="h-4 w-4 text-white" />,
+        label: "Rol",
+        value: user.rol,
+        bg: "bg-indigo-600",
+      },
+      {
+        icon: <BuildingOfficeIcon className="h-4 w-4 text-white" />,
+        label: "Sucursal",
+        value: user.sucursal,
+        bg: "bg-teal-600",
+      },
+      {
+        icon: <CalendarIcon className="h-4 w-4 text-white" />,
+        label: "Último Acceso",
+        value: formatDate(user.ultimo_acceso),
+        bg: "bg-amber-600",
+      },
+      {
+        icon: <PhoneIcon className="h-4 w-4 text-white" />,
+        label: "Teléfono",
+        value: user.telefono ? protectData(user.telefono, 2) : "No proporcionado",
+        bg: "bg-cyan-600",
+      },
+      {
+        icon: <KeyIcon className="h-4 w-4 text-white" />,
+        label: "Cambio Contraseña",
+        value: user.requiere_cambio_password ? "Sí" : "No",
+        bg: "bg-amber-700",
+      },
+      {
+        icon: <ClockIcon className="h-4 w-4 text-white" />,
+        label: "Contraseña Vencida",
+        value: user.password_vencida ? "Sí" : "No",
+        bg: "bg-red-600",
+      },
+    ].map(({ icon, label, value, bg }, index) => (
+      <div
+        key={index}
+        className="flex items-center gap-3 bg-white rounded-xl shadow-md p-3 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33%-0.75rem)]"
+      >
+        <div className={`rounded-full p-2 ${bg}`}>
+          {icon}
+        </div>
+        <div className="text-sm">
+          <div className="font-bold text-gray-700">{label}</div>
+          <div className="text-gray-500 text-xs">{value}</div>
+        </div>
+      </div>
+    ))}
+  </div>
+</TabPanel>
 
                 <TabPanel value="sesion" className="p-6">
                   {loginResponse ? (

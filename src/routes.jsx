@@ -7,6 +7,7 @@ import {
   RectangleStackIcon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
+import Valores from "@/pages/dashboard/Valores";  // <-- Importa tu componente Valores aquí
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -14,7 +15,6 @@ const icon = {
 };
 
 export const routes = [
-  // Movemos auth como primera sección y configuramos sign-in como ruta principal
   {
     title: "auth pages",
     layout: "auth",
@@ -24,15 +24,15 @@ export const routes = [
         name: "sign in",
         path: "/sign-in",
         element: <SignIn />,
-        isDefault: true, // Marcamos esta como la ruta por defecto
-        hideFromMenu: true, // Ocultar del menú
+        isDefault: true,
+        hideFromMenu: true,
       },
       {
         icon: <RectangleStackIcon {...icon} />,
         name: "sign up",
         path: "/sign-up",
         element: <SignUp />,
-        hideFromMenu: true, // Ocultar del menú
+        hideFromMenu: true,
       },
     ],
   },
@@ -46,8 +46,14 @@ export const routes = [
         element: <Home />,
       },
       {
+        icon: <HomeIcon {...icon} />,
+        name: "valores",
+        path: "/valores",
+        element: <Valores />,  // <-- Aquí el componente debe ir en mayúscula
+      },
+      {
         icon: <UserCircleIcon {...icon} />,
-        name: "profile",
+        name: "Mi Perfil",
         path: "/profile",
         element: <Profile />,
       },
@@ -67,7 +73,6 @@ export const routes = [
   },
 ];
 
-// Función helper para obtener la ruta por defecto
 export const getDefaultRoute = () => {
   for (const section of routes) {
     for (const page of section.pages) {
@@ -76,16 +81,16 @@ export const getDefaultRoute = () => {
       }
     }
   }
-  // Fallback al sign-in si no se encuentra una ruta por defecto
   return "/auth/sign-in";
 };
 
-// Función helper para obtener solo las rutas visibles en el menú
 export const getVisibleRoutes = () => {
-  return routes.map(section => ({
-    ...section,
-    pages: section.pages.filter(page => !page.hideFromMenu)
-  })).filter(section => section.pages.length > 0);
+  return routes
+    .map((section) => ({
+      ...section,
+      pages: section.pages.filter((page) => !page.hideFromMenu),
+    }))
+    .filter((section) => section.pages.length > 0);
 };
 
 export default routes;

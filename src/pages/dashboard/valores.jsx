@@ -349,7 +349,7 @@ export default function EmptyProfilePanels() {
                         </div>
                       </div>
                       
-                      <div className="hidden sm:flex items-center gap-4 text-white/10 text-sm">
+                      <div className="hidden sm:flex items-center gap-4 text-white/ text-sm">
                         <div className="text-center">
                           <div className="text-white font-semibold">{currentSection.values.length}</div>
                           <div>Elementos</div>

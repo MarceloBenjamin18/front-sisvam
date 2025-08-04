@@ -3,12 +3,13 @@ import {
   editarValor, 
   obtenerValores, 
   crearValor, 
-  obtenerValorPorId 
+  obtenerValorPorId,
+  eliminarValor
 } from '../../services/valoresService';
 import { 
   BadgePlus, X, AlertCircle, CheckCircle, Type,
   Hash, AlignLeft, List, Gauge, Banknote,
-  FileBadge, Power, Edit 
+  FileBadge, Power, Edit, Trash2
 } from 'lucide-react';
 
 // ---------------------- COMPONENTES HIJO ----------------------
@@ -16,7 +17,7 @@ import {
 /**
  * Componente Tarjeta para vista de grid
  */
-const ValueCard = ({ valor, index, onEditClick }) => {
+const ValueCard = ({ valor, index, onEditClick, onDeleteClick }) => {
   const iconColors = [
     'bg-blue-500 text-white',
     'bg-green-500 text-white',
@@ -49,12 +50,20 @@ const ValueCard = ({ valor, index, onEditClick }) => {
           <span className={`w-2 h-2 rounded-full mr-1 ${valor.estado === 1 ? 'bg-green-500' : 'bg-gray-400'}`}></span>
           {valor.estado === 1 ? 'Activo' : 'Inactivo'}
         </span>
-        <button 
-          onClick={() => onEditClick(valor.id)}
-          className="mt-2 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-        >
-          <Edit className="w-4 h-4" /> Editar
-        </button>
+        <div className="flex gap-2 mt-2">
+          <button 
+            onClick={() => onEditClick(valor.id)}
+            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            <Edit className="w-4 h-4" /> Editar
+          </button>
+          <button 
+            onClick={() => onDeleteClick(valor.id)}
+            className="text-sm text-red-600 hover:text-red-800 flex items-center gap-1"
+          >
+            <Trash2 className="w-4 h-4" /> Eliminar
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -63,7 +72,7 @@ const ValueCard = ({ valor, index, onEditClick }) => {
 /**
  * Componente Fila para vista de tabla
  */
-const ValueRow = ({ valor, onEditClick }) => (
+const ValueRow = ({ valor, onEditClick, onDeleteClick }) => (
   <tr className="border-b border-gray-200 hover:bg-gray-50">
     <td className="px-6 py-4 whitespace-nowrap">
       <div className="flex items-center">
@@ -86,12 +95,20 @@ const ValueRow = ({ valor, onEditClick }) => (
     </td>
     <td className="px-6 py-4 text-sm text-gray-900">{valor.costo.toFixed(2)} Bs</td>
     <td className="px-6 py-4 text-right text-sm font-medium">
-      <button 
-        onClick={() => onEditClick(valor.id)}
-        className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
-      >
-        <Edit className="w-4 h-4" /> Editar
-      </button>
+      <div className="flex gap-3 justify-end">
+        <button 
+          onClick={() => onEditClick(valor.id)}
+          className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+        >
+          <Edit className="w-4 h-4" /> Editar
+        </button>
+        <button 
+          onClick={() => onDeleteClick(valor.id)}
+          className="text-red-600 hover:text-red-900 flex items-center gap-1"
+        >
+          <Trash2 className="w-4 h-4" /> Eliminar
+        </button>
+      </div>
     </td>
   </tr>
 );
@@ -110,6 +127,9 @@ export default function CompleteValuesPanel() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [valorToDelete, setValorToDelete] = useState(null);
+  const [deleteStatus, setDeleteStatus] = useState(null);
   
   // Estado para el formulario
   const [currentValor, setCurrentValor] = useState({
@@ -253,6 +273,34 @@ export default function CompleteValuesPanel() {
       }
     } catch (error) {
       console.error('Error al obtener valor:', error);
+    }
+  };
+
+  // Manejador para el clic en eliminar
+  const handleDeleteClick = (id) => {
+    setValorToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  // Confirmar eliminación
+  const confirmDelete = async () => {
+    try {
+      setDeleteStatus('loading');
+      await eliminarValor(valorToDelete);
+      setDeleteStatus('success');
+      
+      // Actualizar la lista de valores
+      const data = await obtenerValores();
+      setValores(data);
+      
+      setTimeout(() => {
+        setShowDeleteModal(false);
+        setDeleteStatus(null);
+        setValorToDelete(null);
+      }, 1500);
+    } catch (error) {
+      console.error('Error deleting value:', error);
+      setDeleteStatus('error');
     }
   };
 
@@ -458,6 +506,7 @@ export default function CompleteValuesPanel() {
                     valor={valor} 
                     index={index} 
                     onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
                   />
                 ))}
               </div>
@@ -479,6 +528,7 @@ export default function CompleteValuesPanel() {
                         key={valor.id} 
                         valor={valor} 
                         onEditClick={handleEditClick}
+                        onDeleteClick={handleDeleteClick}
                       />
                     ))}
                   </tbody>
@@ -589,17 +639,16 @@ export default function CompleteValuesPanel() {
                   <label className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1">
                     <List className="w-4 h-4 text-orange-600" /> Tipo *
                   </label>
-                  <select
-                    name="tipo"
-                    value={currentValor.tipo}
+                   <input
+                    type="text"
+                    name="sigla"
+                    value={currentValor.sigla}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  >
-                    <option value="moneda">Moneda</option>
-                    <option value="correlativo">Correlativo</option>
-                    <option value="porcentaje">Porcentaje</option>
-                    <option value="fijo">Fijo</option>
-                  </select>
+                    className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
+                      formErrors.sigla ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                    placeholder="Ej: Correlativo"
+                  />
                 </div>
 
                 {/* Medida */}
@@ -607,17 +656,16 @@ export default function CompleteValuesPanel() {
                   <label className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1">
                     <Gauge className="w-4 h-4 text-red-600" /> Medida *
                   </label>
-                  <select
-                    name="medida"
-                    value={currentValor.medida}
+                  <input
+                    type="text"
+                    name="sigla"
+                    value={currentValor.sigla}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  >
-                    <option value="unidad">Unidad</option>
-                    <option value="metro">Metro</option>
-                    <option value="metro_cuadrado">Metro cuadrado</option>
-                    <option value="porcentaje">Porcentaje</option>
-                  </select>
+                    className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
+                      formErrors.sigla ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                    placeholder="Ej: Unidad"
+                  />
                 </div>
 
                 {/* Costo */}
@@ -782,7 +830,7 @@ export default function CompleteValuesPanel() {
                     className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
                       formErrors.sigla ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500'
                     }`}
-                    placeholder="Ej: IA"
+                    placeholder="Ej: Correlativo"
                   />
                 </div>
 
@@ -806,17 +854,16 @@ export default function CompleteValuesPanel() {
                   <label className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1">
                     <List className="w-4 h-4 text-orange-600" /> Tipo *
                   </label>
-                  <select
-                    name="tipo"
-                    value={currentValor.tipo}
+                  <input
+                    type="text"
+                    name="sigla"
+                    value={currentValor.sigla}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  >
-                    <option value="moneda">Moneda</option>
-                    <option value="correlativo">Correlativo</option>
-                    <option value="porcentaje">Porcentaje</option>
-                    <option value="fijo">Fijo</option>
-                  </select>
+                    className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
+                      formErrors.sigla ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                    placeholder="Ej: Correlativo"
+                  />
                 </div>
 
                 {/* Medida */}
@@ -824,17 +871,16 @@ export default function CompleteValuesPanel() {
                   <label className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1">
                     <Gauge className="w-4 h-4 text-red-600" /> Medida *
                   </label>
-                  <select
-                    name="medida"
-                    value={currentValor.medida}
+                  <input
+                    type="text"
+                    name="sigla"
+                    value={currentValor.sigla}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  >
-                    <option value="unidad">Unidad</option>
-                    <option value="metro">Metro</option>
-                    <option value="metro_cuadrado">Metro cuadrado</option>
-                    <option value="porcentaje">Porcentaje</option>
-                  </select>
+                    className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
+                      formErrors.sigla ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500'
+                    }`}
+                    placeholder="Ej: Unidad"
+                  />
                 </div>
 
                 {/* Costo */}
@@ -940,6 +986,105 @@ export default function CompleteValuesPanel() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-y-auto border border-red-100">
+            <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center bg-red-100 rounded-t-2xl">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="text-red-600 w-6 h-6" />
+                <h2 className="text-xl font-bold text-red-800">Eliminar Valor Municipal</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteStatus(null);
+                  setValorToDelete(null);
+                }}
+                className="text-gray-400 hover:text-red-500 transition"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6 bg-white rounded-b-2xl">
+              {deleteStatus !== 'success' && (
+                <>
+                  <p className="text-gray-700">
+                    ¿Estás seguro que deseas eliminar este valor municipal? Esta acción no se puede deshacer.
+                  </p>
+                  
+                  {deleteStatus === 'error' && (
+                    <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      Error al eliminar el valor. Por favor intenta nuevamente.
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDeleteModal(false);
+                        setDeleteStatus(null);
+                        setValorToDelete(null);
+                      }}
+                      className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmDelete}
+                      disabled={deleteStatus === 'loading'}
+                      className={`px-5 py-2 rounded-lg text-white font-medium transition ${
+                        deleteStatus === 'loading'
+                          ? 'bg-red-400 cursor-not-allowed'
+                          : 'bg-red-600 hover:bg-red-700'
+                      }`}
+                    >
+                      {deleteStatus === 'loading' ? (
+                        <div className="flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.37258 0 0 5.37258 0 12h4z"
+                            ></path>
+                          </svg>
+                          Eliminando...
+                        </div>
+                      ) : 'Eliminar'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {deleteStatus === 'success' && (
+                <div className="text-center py-4">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Valor eliminado correctamente</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteStatus(null);
+                      setValorToDelete(null);
+                    }}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

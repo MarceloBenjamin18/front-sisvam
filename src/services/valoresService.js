@@ -90,7 +90,6 @@ export const editarValor = async (id, data) => {
   }
 };
 
-// Opcional: función para eliminar valores
 export const eliminarValor = async (id) => {
   try {
     console.log('Eliminando valor con ID:', id);

@@ -6,8 +6,10 @@ import {
   ServerStackIcon,
   RectangleStackIcon,
 } from "@heroicons/react/24/solid";
+
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
-import Valores from "@/pages/dashboard/Valores";  // <-- Importa tu componente Valores aquí
+import Valores from "@/pages/dashboard/Valores";
+import Sucursales from "@/pages/dashboard/Sucursales"; // ✅ Importación corregida
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -49,7 +51,13 @@ export const routes = [
         icon: <HomeIcon {...icon} />,
         name: "valores",
         path: "/valores",
-        element: <Valores />,  // <-- Aquí el componente debe ir en mayúscula
+        element: <Valores />,
+      },
+      {
+        icon: <HomeIcon {...icon} />,
+        name: "sucursales",
+        path: "/sucursales",
+        element: <Sucursales />,
       },
       {
         icon: <UserCircleIcon {...icon} />,
@@ -57,18 +65,7 @@ export const routes = [
         path: "/profile",
         element: <Profile />,
       },
-      {
-        icon: <TableCellsIcon {...icon} />,
-        name: "tables",
-        path: "/tables",
-        element: <Tables />,
-      },
-      {
-        icon: <InformationCircleIcon {...icon} />,
-        name: "notifications",
-        path: "/notifications",
-        element: <Notifications />,
-      },
+     
     ],
   },
 ];

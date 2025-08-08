@@ -9,7 +9,8 @@ import {
 
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import Valores from "@/pages/dashboard/Valores";
-import Sucursales from "@/pages/dashboard/Sucursales"; // ✅ Importación corregida
+import Sucursales from "@/pages/dashboard/Sucursales";
+import Inventario from "@/pages/dashboard/Inventario"; // ✅ Importación añadida
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -65,7 +66,12 @@ export const routes = [
         path: "/profile",
         element: <Profile />,
       },
-     
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "Inventario",
+        path: "/inventario",
+        element: <Inventario />,
+      },
     ],
   },
 ];
